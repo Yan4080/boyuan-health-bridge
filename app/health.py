@@ -366,6 +366,48 @@ class HealthBridge:
             "notice": "数据来自小米运动健康亲友共享，不用于医疗诊断。",
         }
 
+    async def body_composition_history(
+        self,
+        relative: str | None,
+        query_date: str | None,
+        days: int,
+    ) -> dict[str, Any]:
+        """Return raw weight-measurement records, including body-composition fields when available."""
+        if not 1 <= days <= 30:
+            raise ValueError("days 必须在 1 到 30 之间")
+
+        target_date = (
+            date.fromisoformat(query_date)
+            if query_date
+            else datetime.now(_XIAOMI_TIMEZONE).date()
+        )
+        start_date = target_date - timedelta(days=days - 1)
+        end_date = target_date + timedelta(days=1)
+        start_time = datetime.combine(start_date, datetime.min.time(), tzinfo=_XIAOMI_TIMEZONE)
+        end_time = datetime.combine(end_date, datetime.min.time(), tzinfo=_XIAOMI_TIMEZONE)
+
+        client = self._get_client()
+        member = await self.resolve_relative(relative)
+        response = await client.get_fitness_data(
+            member.relative_uid,
+            "weight",
+            start_time,
+            end_time,
+        )
+        data = response.model_dump(mode="json") if hasattr(response, "model_dump") else response
+
+        return {
+            "relative": member.model_dump(mode="json"),
+            "metric": "body_composition",
+            "query_date": target_date.isoformat(),
+            "days": days,
+            "data": data,
+            "notice": (
+                "数据来自小米运动健康亲友共享的原始体重测量记录。"
+                "体脂率、肌肉量等字段仅在上游实际返回时提供，不用于医疗诊断。"
+            ),
+        }
+
     def export_token_json(self) -> str:
         if not self._token_json:
             raise RuntimeError("token 尚未生成")
