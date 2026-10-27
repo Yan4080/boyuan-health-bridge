@@ -95,6 +95,23 @@ async def get_health_history(
 
 
 @mcp.tool(
+    title="读取体成分历史",
+    description=(
+        "读取小米运动健康亲友共享的原始体重测量记录，尽可能包含体重、BMI、体脂率、"
+        "肌肉量等上游实际返回的字段。日期格式为 YYYY-MM-DD，days 为 1 到 30。"
+        "只有一位亲友时 relative 可以省略。"
+    ),
+    annotations=READ_ONLY,
+)
+async def get_body_composition_history(
+    relative: str | None = None,
+    query_date: str | None = None,
+    days: int = 7,
+) -> dict:
+    return await health_bridge.body_composition_history(relative, query_date, days)
+
+
+@mcp.tool(
     title="检查健康桥状态",
     description="检查小米凭证是否已经配置；不会返回任何密钥或完整账号信息。",
     annotations=READ_ONLY,
