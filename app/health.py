@@ -383,8 +383,13 @@ class HealthBridge:
         )
         start_date = target_date - timedelta(days=days - 1)
         end_date = target_date + timedelta(days=1)
-        start_time = datetime.combine(start_date, datetime.min.time(), tzinfo=_XIAOMI_TIMEZONE)
-        end_time = datetime.combine(end_date, datetime.min.time(), tzinfo=_XIAOMI_TIMEZONE)
+        start_time = int(
+            datetime.combine(start_date, datetime.min.time(), tzinfo=_XIAOMI_TIMEZONE).timestamp()
+        )
+        end_time = (
+            int(datetime.combine(end_date, datetime.min.time(), tzinfo=_XIAOMI_TIMEZONE).timestamp())
+            - 1
+        )
 
         client = self._get_client()
         member = await self.resolve_relative(relative)
